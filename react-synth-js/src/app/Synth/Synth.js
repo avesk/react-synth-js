@@ -61,10 +61,10 @@ class Analyser extends Component {
         const bufferLength = this.state.bufferLength;
         const dataArray = this.state.dataArray;
         analyser.getByteFrequencyData(dataArray);
-        console.log(dataArray);
-        // for (var i = 0; i < bufferLength; i++) {
-        //     console.log(dataArray[i]); 
-        // }
+        // console.log(dataArray);
+        for (var i = 0; i < bufferLength; i++) {
+            console.log(dataArray[i]); 
+        }
     }
 
     render() {
@@ -119,7 +119,7 @@ class Synth extends Component {
     constructor(props) {
         super(props);
 
-        const presetTamber = presets.triangle;
+        const presetTamber = presets.square;
 
         this.state = {activeOscillators: {}, tamberMode: presetTamber, waveform: 'sine' };
 
@@ -190,7 +190,6 @@ class Synth extends Component {
         const harmGain = audioCtx.createGain(); // node
         harmGain.gain.setValueAtTime(gain, audioCtx.currentTime);
         activeOscillators[offset].connect(harmGain);
-        activeOscillators[offset].connect(analyser); // connect analyser
         harmGain.connect(masterGain);
         activeOscillators[offset].start();
         this.setState({activeOscillators: activeOscillators});
@@ -199,7 +198,7 @@ class Synth extends Component {
     render() {
         return(
             <React.Fragment>
-                <Analyser />
+                {/* <Analyser /> */}
                 <p>SYNTH</p>
             </React.Fragment>
         ) 
