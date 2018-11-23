@@ -33,45 +33,11 @@ const keyboardFrequencyMap = {
 // SET UP AUDIO CONTEXT
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-// create audio analyiser
+// create audio analyiser (not used)
 const analyser = audioCtx.createAnalyser();
 
 // PROCESSING CHAIN
 const masterGain = audioCtx.createGain(); // node
-
-class Analyser extends Component {
-    constructor(props) {
-        super(props);
-
-        // CONNECTIONS
-        analyser.connect(audioCtx.destination);
-
-        // what does this do?
-        analyser.fftSize = 2048;
-
-        // what does this do exactly?
-        var bufferLength = analyser.frequencyBinCount;
-
-        var dataArray = new Uint8Array(bufferLength);
-
-        this.state = {bufferLength: bufferLength, dataArray: dataArray};
-    }
-
-    renderFrequencyData() {
-        const bufferLength = this.state.bufferLength;
-        const dataArray = this.state.dataArray;
-        analyser.getByteFrequencyData(dataArray);
-        // console.log(dataArray);
-        for (var i = 0; i < bufferLength; i++) {
-            console.log(dataArray[i]); 
-        }
-    }
-
-    render() {
-        this.renderFrequencyData();
-        return <p>Analyser</p>;
-    }
-}
 
 const presets = {
     'sine': [
@@ -111,7 +77,18 @@ const presets = {
         {'harmonic': 6, 'gain': 1},
         {'harmonic': 5, 'gain': 1},
         {'harmonic': 4, 'gain': 1},
-    ]
+    ],
+    'a_harmonic_square': [
+        {'harmonic': 1, 'gain': 1},
+        {'harmonic': .777, 'gain': 1},
+        {'harmonic': .23423, 'gain': 1},
+        {'harmonic': 3, 'gain': .5},
+        {'harmonic': 5, 'gain': .25},
+        {'harmonic': 5.7564534, 'gain': .25},
+        {'harmonic': 7, 'gain': .125},
+        {'harmonic': 8, 'gain': .065},
+        {'harmonic': 13.464, 'gain': .065},
+    ],
 }
 
 class Synth extends Component {
@@ -119,12 +96,21 @@ class Synth extends Component {
     constructor(props) {
         super(props);
 
-        const presetTamber = presets.square;
+        // unused analyser code
+        analyser.fftSize = 2048;
+        var bufferLength = analyser.frequencyBinCount;
+        var dataArray = new Uint8Array(bufferLength);
 
-        this.state = {activeOscillators: {}, tamberMode: presetTamber, waveform: 'sine' };
+        const presetTamber = presets.triangle;
+
+        this.state = {
+            activeOscillators: {}, tamberMode: presetTamber, 
+            waveform: 'sine', dataArray: dataArray 
+        };
 
         // CONNECTIONS
         masterGain.connect(audioCtx.destination);
+        // masterGain.connect(analyser);
 
         this.keyDown = this.keyDown.bind(this);
         this.keyUp = this.keyUp.bind(this);
@@ -138,6 +124,15 @@ class Synth extends Component {
     componentWillUnmount() {
         window.removeEventListener("keydown", this.keyDown, false);
         window.removeEventListener("keyup", this.keyUp, false);
+    }
+
+    renderFrequencyData() {
+        const dataArray = this.state.dataArray;
+        analyser.getByteFrequencyData(dataArray);
+        // console.log(dataArray);
+        dataArray.map( harm => {
+            console.log(harm);
+        });
     }
 
     keyDown(event) {
@@ -154,6 +149,9 @@ class Synth extends Component {
         this.stopNote(key, freq);
     }
 
+    /**
+     * Stop each harmonic associated with the timbre mode
+     */
     stopNote(key, freq) {
         var activeOscillators = this.state.activeOscillators;
         var offset;
@@ -168,6 +166,10 @@ class Synth extends Component {
         });
     }
 
+    // @todo account for octaves in offset
+    /**
+     * Play each harmonic associated with the timbre mode
+     */
     playNoteWithTamber(key, fund) {
         var offset, freq;
         var tamberMode = this.state.tamberMode;
@@ -178,12 +180,21 @@ class Synth extends Component {
                 this.playNote(freq, offset, harm['gain']);
             }
         });
+        // this.renderFrequencyData();
     }
 
+    /**
+     * Create a new oscillator for the harmonic
+     * Set the frequency of that oscillator the frequency of the harmonic
+     * Set the wave form of that harmonic (sine by default in state)
+     * Create a and set a gain connection
+     * Connect the harmonic oscillator to the gain
+     * connect the gain to the master gain
+     * start the oscillator
+     */
     playNote(freq, offset, gain) {
         const osc = audioCtx.createOscillator(); 
         var activeOscillators = this.state.activeOscillators;
-
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         osc.type = this.state.waveform;
         activeOscillators[offset] = osc;
@@ -198,8 +209,7 @@ class Synth extends Component {
     render() {
         return(
             <React.Fragment>
-                {/* <Analyser /> */}
-                <p>SYNTH</p>
+                <p></p>
             </React.Fragment>
         ) 
     }
