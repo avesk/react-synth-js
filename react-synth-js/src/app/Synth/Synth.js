@@ -97,20 +97,20 @@ class Synth extends Component {
         super(props);
 
         // unused analyser code
-        analyser.fftSize = 2048;
+        analyser.fftSize = 256;
         var bufferLength = analyser.frequencyBinCount;
         var dataArray = new Uint8Array(bufferLength);
 
-        const presetTamber = presets.sine;
-
+        const presetTamber = presets.triangle;
+        const offPrec = 1; // offset precision
         this.state = {
             activeOscillators: {}, tamberMode: presetTamber, 
-            waveform: 'sine', dataArray: dataArray 
+            waveform: 'sine', dataArray: dataArray, offPrec 
         };
 
         // CONNECTIONS
         masterGain.connect(audioCtx.destination);
-        // masterGain.connect(analyser);
+        masterGain.connect(analyser);
 
         this.keyDown = this.keyDown.bind(this);
         this.keyUp = this.keyUp.bind(this);
@@ -141,6 +141,9 @@ class Synth extends Component {
             console.log(key + " down");
             const fund = keyboardFrequencyMap[key];
             this.playNoteWithTamber(key, fund);
+            this.renderFrequencyData();
+        } else {
+            // this.renderFrequencyData();
         }
     }
 
@@ -158,8 +161,9 @@ class Synth extends Component {
         var activeOscillators = this.state.activeOscillators;
         var offset;
         var tamberMode = this.state.tamberMode;
+        var offPrec = this.state.offPrec;
         tamberMode.map( harm => {
-            offset = Math.floor(freq*harm['harmonic']*1000);
+            offset = Math.floor(freq*harm['harmonic']*offPrec); // *1000 adds more precision on the index
             if(keyboardFrequencyMap[key] && this.state.activeOscillators[offset]) {
                 activeOscillators[offset].stop();
                 delete activeOscillators[offset];
@@ -175,16 +179,16 @@ class Synth extends Component {
     playNoteWithTamber(key, fund) {
         var offset, freq;
         var tamberMode = this.state.tamberMode;
+        var offPrec = this.state.offPrec;
         tamberMode.map( harm => {
             freq = fund*harm['harmonic'];
-            offset = Math.floor(freq*1000);
+            offset = Math.floor(freq*offPrec);
             console.log('playing: ' + offset)
             // offset = this.getOffset();
             if(keyboardFrequencyMap[key] && !this.state.activeOscillators[offset]) {
                 this.playNote(freq, offset, harm['gain']);
             }
         });
-        // this.renderFrequencyData();
     }
 
     /**
