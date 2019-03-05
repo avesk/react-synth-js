@@ -2,6 +2,7 @@
  * https://medium.com/@mautayro/creating-a-basic-computer-keyboard-controlled-synthesizer-with-the-web-audio-api-8a3d0ab1d65e
  */
 import React, { Component } from 'react';
+import { Chart } from "react-google-charts";
 
 const keyboardFrequencyMap = {
     '90': 261.6256, // C
@@ -101,11 +102,13 @@ class Synth extends Component {
         var bufferLength = analyser.frequencyBinCount;
         var dataArray = new Uint8Array(bufferLength);
 
-        const presetTamber = presets.triangle;
+        const presetTamber = presets.square;
         const offPrec = 1; // offset precision
+        const chartData = [['Harmonic', 'Frequency']];
+
         this.state = {
             activeOscillators: {}, tamberMode: presetTamber, 
-            waveform: 'sine', dataArray: dataArray, offPrec 
+            waveform: 'sine', dataArray: dataArray, offPrec, chartData 
         };
 
         // CONNECTIONS
@@ -129,10 +132,13 @@ class Synth extends Component {
     renderFrequencyData() {
         const dataArray = this.state.dataArray;
         analyser.getByteFrequencyData(dataArray);
+        const chartData = [['Harmonic', 'Frequency']];
         // console.log(dataArray);
         dataArray.map( harm => {
-            console.log(harm);
+            chartData.push([harm, harm]);
+            // console.log(harm);
         });
+        this.setState({chartData: chartData});
     }
 
     keyDown(event) {
@@ -141,7 +147,7 @@ class Synth extends Component {
             console.log(key + " down");
             const fund = keyboardFrequencyMap[key];
             this.playNoteWithTamber(key, fund);
-            this.renderFrequencyData();
+            // this.renderFrequencyData();
         } else {
             // this.renderFrequencyData();
         }
@@ -165,7 +171,7 @@ class Synth extends Component {
         tamberMode.map( harm => {
             offset = Math.floor(freq*harm['harmonic']*offPrec); // *1000 adds more precision on the index
             if(keyboardFrequencyMap[key] && this.state.activeOscillators[offset]) {
-                activeOscillators[offset].stop();
+                activeOscillators[offset].osc.stop();
                 delete activeOscillators[offset];
                 this.setState({activeOscillators: activeOscillators})
             }
@@ -198,6 +204,7 @@ class Synth extends Component {
      * Create a and set a gain connection
      * Connect the harmonic oscillator to the gain
      * connect the gain to the master gain
+     * log gain in the active Oscillator object
      * start the oscillator
      */
     playNote(freq, offset, gain) {
@@ -205,19 +212,48 @@ class Synth extends Component {
         var activeOscillators = this.state.activeOscillators;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         osc.type = this.state.waveform;
-        activeOscillators[offset] = osc;
+        activeOscillators[offset] = {'osc': osc, 'gain': gain};
         const harmGain = audioCtx.createGain(); // node
         harmGain.gain.setValueAtTime(gain, audioCtx.currentTime);
-        activeOscillators[offset].connect(harmGain);
+        activeOscillators[offset].osc.connect(harmGain);
         harmGain.connect(masterGain);
-        activeOscillators[offset].start();
+        activeOscillators[offset].osc.start();
         this.setState({activeOscillators: activeOscillators});
     }
 
+    freqChartData() {
+        const oscs = this.state.activeOscillators;
+        const oscKeys = Object.keys(oscs);
+        var chartData = [['Frequence Hz', 'Gain dB']];
+        if(oscs) {
+            oscKeys.map( function(key, idx) {
+                chartData.push([oscs[key].osc.frequency.value, oscs[key].gain])
+            });
+            console.log(chartData)
+        }
+        return chartData;
+    }
     render() {
+        const chartData = this.freqChartData()
+        // console.log(Object.keys(oscs));
         return(
             <React.Fragment>
-                <p></p>
+                <Chart
+                    width={'500px'}
+                    height={'300px'}
+                    chartType="Bar"
+                    loader={<div>Loading Chart</div>}
+                    data={chartData}
+                    options={{
+                        // Material design options
+                        chart: {
+                        title: 'Frequency Chart',
+                        subtitle: 'Frequency Domain',
+                        },
+                    }}
+                    // For tests
+                    rootProps={{ 'data-testid': '2' }}
+                    />
             </React.Fragment>
         ) 
     }
