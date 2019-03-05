@@ -101,7 +101,7 @@ class Synth extends Component {
         var bufferLength = analyser.frequencyBinCount;
         var dataArray = new Uint8Array(bufferLength);
 
-        const presetTamber = presets.triangle;
+        const presetTamber = presets.sine;
 
         this.state = {
             activeOscillators: {}, tamberMode: presetTamber, 
@@ -136,10 +136,12 @@ class Synth extends Component {
     }
 
     keyDown(event) {
-        const key = (event.detail || event.which).toString();
-        console.log(key + " down");
-        const fund = keyboardFrequencyMap[key];
-        this.playNoteWithTamber(key, fund);
+        if(!event.repeat) { // prevent key down from repeatedly firing
+            const key = (event.detail || event.which).toString();
+            console.log(key + " down");
+            const fund = keyboardFrequencyMap[key];
+            this.playNoteWithTamber(key, fund);
+        }
     }
 
     keyUp(event) {
@@ -176,6 +178,8 @@ class Synth extends Component {
         tamberMode.map( harm => {
             freq = fund*harm['harmonic'];
             offset = Math.floor(freq*1000);
+            console.log('playing: ' + offset)
+            // offset = this.getOffset();
             if(keyboardFrequencyMap[key] && !this.state.activeOscillators[offset]) {
                 this.playNote(freq, offset, harm['gain']);
             }

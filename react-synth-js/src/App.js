@@ -16,7 +16,7 @@ const App = () => (
         web based synthesizer.
       </h2>
       <h2>
-        For the purposes of MUS 207, I have developed the additive synthesis feature, programmable
+        For the purposes of MUS 207, I have developed the additive synthesis feature programmable
         via javascript code (UI coming soon :P).
       </h2>
     </section>
@@ -47,22 +47,24 @@ const App = () => (
       </p>
       <h3>React Synth uses.. Surprise, React!</h3>
       <p>
-        React is a cpmonent based JS framework... All that really means, is that its a method of developing
+        React is a component based JS framework... All that really means, is that it's a method of developing
         more organized, modular javascript based applications.
       </p>
     </section>
     <section>
       <h2>Technical Challenges: </h2>
+      <h3>Frameworks & Code </h3>
       <ul>
         <li>Originally, I started this project using bare minimum technologies, i.e JS and HTML</li>
         <li>Deciding to port the project to React sets the app up to be more reusable and scalable</li>
       </ul>
+      <h3>Mapping Oscillators</h3>
       <ul>
-        <li>Managing oscillators when keys are mapped to complex timbres</li>
-        <li>Keydown plays x number of oscillators, and keyup removes them.</li>
+        <li>Managing oscillators when keys are mapped to different timbres</li>
+        <li>Keydown plays x number of harmonic oscillators, and keyup removes them.</li>
         <li>What if one note is activating multiple oscillators?.</li>
         <li>That will prevent other oscilators in higher or lower notes that contain the same harmonics from playing.</li>
-        <li>Full discloser, problem isn't full solved will require some hash mapping, or tweaked logic</li>
+        <li>Full discloser, problem isn't fully solved, and will require some hash mapping, or tweaked logic for uniquely mapping oscillators</li>
         <li>Short term solution, map each oscillator to a large index to avoid collisions.</li>
       </ul>
     </section>
